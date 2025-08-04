@@ -1,40 +1,30 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-# All rights reserved.
-#
-# Licensed under the Oculus SDK License Agreement (the "License");
-# you may not use the Oculus SDK except in compliance with the License,
-# which is provided at the time of installation or download, or which
-# otherwise accompanies this software in either electronic or hard copy form.
-#
-# You may obtain a copy of the License at
-# https://developer.oculus.com/licenses/oculussdk/
-#
-# Unless required by applicable law or agreed to in writing, the Oculus SDK
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+
 project(xrsamples_xrcolorspacefb)
 
+#Es redundante pero sirve para encontrar errores en el debugging
 if(NOT TARGET OpenXR::openxr_loader)
     find_package(OpenXR REQUIRED)
 endif()
 
+#Solo encuentra en este caso "Src/main.cpp"
 file(GLOB_RECURSE SRC_FILES
     Src/*.c
     Src/*.cpp
 )
 
+#En android se crea el libxrsamples_xrcolorspacefb.so y en windows el xrsamples_xrcolorspacefb.exe
 if(ANDROID)
+    # En Android: Las aplicaciones nativas son MODULE libraries (librerias dinamicas para android)
     add_library(${PROJECT_NAME} MODULE ${SRC_FILES})
     target_include_directories(${PROJECT_NAME} PUBLIC ${ANDROID_NDK}/sources/android/native_app_glue)
     target_link_libraries(${PROJECT_NAME} PRIVATE
-        android
-        EGL
-        GLESv3
-        log
-        ktx
+            android              # API Android nativa
+            EGL                  # Context OpenGL ES
+            GLESv3               # OpenGL ES 3.x
+            log                  # Android logging (__android_log_print)
+            ktx                  # Texturas KTX (compilada en 3rdParty)
     )
+    # Android necesita -u ANativeActivity_onCreate como punto de entrada
     set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-u ANativeActivity_onCreate")
 elseif(WIN32)
     add_definitions(-D_USE_MATH_DEFINES)
@@ -52,6 +42,8 @@ elseif(WIN32)
         VERBATIM)
 endif()
 
-# Common across platforms
+#Acceso a todas las clases: OVRFW::XrApp, OVRFW::TinyUI, etc.
+#Dependencias transitivas: Automáticamente enlaza con minizip, stb, ktx, OpenXR::openxr_loader
+#Headers automáticos: Acceso a todos los includes del framework
 target_include_directories(${PROJECT_NAME} PRIVATE Src)
 target_link_libraries(${PROJECT_NAME} PRIVATE samplexrframework)

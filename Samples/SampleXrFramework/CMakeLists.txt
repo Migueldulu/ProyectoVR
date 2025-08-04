@@ -1,45 +1,33 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-# All rights reserved.
-#
-# Licensed under the Oculus SDK License Agreement (the "License");
-# you may not use the Oculus SDK except in compliance with the License,
-# which is provided at the time of installation or download, or which
-# otherwise accompanies this software in either electronic or hard copy form.
-#
-# You may obtain a copy of the License at
-# https://developer.oculus.com/licenses/oculussdk/
-#
-# Unless required by applicable law or agreed to in writing, the Oculus SDK
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+#Se cargo en el cmakelists de terceros
 if(NOT TARGET OpenXR::openxr_loader)
     find_package(OpenXR REQUIRED)
 endif()
 
+#libreria que conecta el main.cpp con Android Activity
 if(ANDROID)
     add_library(app_glue STATIC ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c)
 endif()
 
+#Aqui solo estan realmente las de META
 set(OPENXR_PREVIEW_HEADER ../../OpenXR)
 
 set(1STPARTY_PATH ../1stParty)
 set(3RDPARTY_PATH ../3rdParty)
 
+#Crea la libreria estatica libsamplexrframework
 file(GLOB_RECURSE CPP_SOURCES "Src/*.cpp")
 file(GLOB_RECURSE C_SOURCES "Src/*.c")
 add_library(samplexrframework STATIC ${CPP_SOURCES} ${C_SOURCES})
 
 
-# Add include directories
+# Estos includes se propagaran a quien compile samplexrframework
 target_include_directories(
     samplexrframework
     PUBLIC
         Src
         ${1STPARTY_PATH}/OVR/Include
         ${1STPARTY_PATH}/utilities/include
-        #### 3rd Party Headers from the OpenXR repo ####
+        # Aqui entra solo xr_linear que son matematicas para OpenXR
         ${3RDPARTY_PATH}/khronos/openxr/OpenXR-SDK/src/common
         # Extra vendor-provided headers
         ${OPENXR_PREVIEW_HEADER}
@@ -54,10 +42,12 @@ target_link_libraries(
         OpenXR::openxr_loader
 )
 
+#Habilita logging y asserts en modo debug
 target_compile_definitions(
     samplexrframework PUBLIC $<IF:$<CONFIG:Debug>,OVR_BUILD_DEBUG=1,>
 )
 
+#Por esto no funciona bien con MSVC
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(
         samplexrframework
@@ -65,15 +55,16 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     )
 endif()
 
+#Configuración Android
 if(ANDROID)
     target_include_directories(samplexrframework PUBLIC ${ANDROID_NDK}/sources/android/native_app_glue)
     target_compile_definitions(
         samplexrframework
         PUBLIC
-            XR_OS_ANDROID=1
-            XR_USE_PLATFORM_ANDROID=1
-            XR_USE_GRAPHICS_API_OPENGL_ES=1
-            ANDROID_NDK
+            XR_OS_ANDROID=1                    # Sistema operativo
+            XR_USE_PLATFORM_ANDROID=1          # Plataforma OpenXR
+            XR_USE_GRAPHICS_API_OPENGL_ES=1    # API gráfica
+            ANDROID_NDK                        # Flag general NDK
             $<IF:$<CONFIG:Debug>,OVR_BUILD_DEBUG=1,>
     )
     target_compile_options(
@@ -88,12 +79,13 @@ if(ANDROID)
     target_link_libraries(
         samplexrframework
         PRIVATE
-            android
-            EGL
-            GLESv3
-            log
-            app_glue
+            android                           # API Android
+            EGL                              # Context OpenGL ES
+            GLESv3                           # OpenGL ES 3.x
+            log                              # Android logging
+            app_glue                         # Native app connection
     )
+    #ASan es un detector de errores de memoria de Cmake
     if(USE_ASAN)
         target_compile_options(
             samplexrframework
@@ -113,7 +105,7 @@ elseif(WIN32)
 
     add_library(
         samplecommon_win32gl STATIC
-        Src/Render/GlWrapperWin32.c
+        Src/Render/GlWrapperWin32.c            # Wrapper OpenGL para Windows
     )
 
     target_include_directories(
@@ -130,7 +122,7 @@ elseif(WIN32)
     target_link_libraries(samplexrframework PUBLIC samplecommon_win32gl)
     target_compile_definitions(
         samplexrframework PUBLIC XR_OS_WINDOWS=1 XR_USE_PLATFORM_WIN32=1
-                                    XR_USE_GRAPHICS_API_OPENGL=1
+                                    XR_USE_GRAPHICS_API_OPENGL=1    # OpenGL desktop, no ES que es para android
     )
 endif()
 

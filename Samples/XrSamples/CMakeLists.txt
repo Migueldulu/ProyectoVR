@@ -1,25 +1,12 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-# All rights reserved.
-#
-# Licensed under the Oculus SDK License Agreement (the "License");
-# you may not use the Oculus SDK except in compliance with the License,
-# which is provided at the time of installation or download, or which
-# otherwise accompanies this software in either electronic or hard copy form.
-#
-# You may obtain a copy of the License at
-# https://developer.oculus.com/licenses/oculussdk/
-#
-# Unless required by applicable law or agreed to in writing, the Oculus SDK
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# Get all directories in the current directory
+
+# Haciendo este fichero asi podemos hacer el proyecto muy escalable para hacer distintas pruebas
+
+# Esto obtiene una lista con todos los subdirectorios
 file(GLOB children RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*)
 
-# Loop through the list of directories
+# Loop con la lista de directorios
 foreach(child ${children})
-    # If the current item is a directory
+    # Si el objeto es un directorio entra
     if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${child})
         # Add it as a subdirectory
         add_subdirectory(${child})

@@ -1,6 +1,5 @@
 function(find_ktx)
-    # use prebuild library for Android to avoid runtime crash, further
-    # investigation needed on building from ktx source
+    # Se usa la libreria precompilada para evitar crasheos de runtime
     if (ANDROID)
         set(KTX_DIR ${CMAKE_CURRENT_LIST_DIR}/khronos/ktx)
 
@@ -106,8 +105,9 @@ function(find_stb)
     target_include_directories(stb PUBLIC ${CMAKE_CURRENT_LIST_DIR}/stb/src)
 endfunction()
 
+#ESTA es la que carga el openxr
 function(find_openxr_loader)
-    # Pull openxr loader for windows build as there is no aar method on windows
+    # Pull openxr solo en windows porque Android usa el AAR de openxr_loader_for_android
     if(WIN32)
         include(FetchContent)
 

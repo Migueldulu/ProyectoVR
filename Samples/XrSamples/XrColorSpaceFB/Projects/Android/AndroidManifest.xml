@@ -6,7 +6,7 @@
     android:versionName="1.0"
     android:installLocation="auto"
     >
-  <!-- Tell the system this app requires OpenGL ES 3.1. -->
+  <!-- Obliga a tener OpenGl ES y a tener head device-->
   <uses-feature
       android:glEsVersion="0x00030001"
       android:required="true"
@@ -15,6 +15,7 @@
       android:name="android.hardware.vr.headtracking"
       android:required="true"
       />
+  <!-- Desactivar el backup auto porque las apps vr pueden tener datos sensibles -->
   <application
       android:allowBackup="false"
       android:label="@string/app_name"
@@ -23,6 +24,7 @@
 		app running -->
     <!-- Theme.Black.NoTitleBar.Fullscreen gives solid black instead of a (bad stereoscopic)
 		gradient on app transition -->
+    <!--  configChanges configurado por   -->
     <activity
         android:name="com.oculus.sdk.xrcolorspacefb.MainActivity"
         android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
@@ -37,7 +39,7 @@
           android:name="android.app.lib_name"
           android:value="xrsamples_xrcolorspacefb"
           />
-      <!-- This filter lets the apk show up as a launchable icon -->
+      <!-- Permite ver la aplicacion como un icono, y ademas integramos OpenXr  -->
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="org.khronos.openxr.intent.category.IMMERSIVE_HMD" />
