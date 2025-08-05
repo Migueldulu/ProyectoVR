@@ -1,0 +1,2 @@
+ninja: Entering directory `C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\.cxx\Debug\7s1i2n2k\arm64-v8a'
+ninja: no work to do.

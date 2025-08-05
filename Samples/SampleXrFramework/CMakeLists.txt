@@ -11,7 +11,7 @@ endif()
 #Aqui solo estan realmente las de META
 set(OPENXR_PREVIEW_HEADER ../../OpenXR)
 
-set(1STPARTY_PATH ../1stParty)
+set(MetaDev_PATH ../MetaDev)
 set(3RDPARTY_PATH ../3rdParty)
 
 #Crea la libreria estatica libsamplexrframework
@@ -25,8 +25,8 @@ target_include_directories(
     samplexrframework
     PUBLIC
         Src
-        ${1STPARTY_PATH}/OVR/Include
-        ${1STPARTY_PATH}/utilities/include
+        ${MetaDev_PATH}/OVR/Include
+        ${MetaDev_PATH}/utilities/include
         # Aqui entra solo xr_linear que son matematicas para OpenXR
         ${3RDPARTY_PATH}/khronos/openxr/OpenXR-SDK/src/common
         # Extra vendor-provided headers
@@ -113,9 +113,9 @@ elseif(WIN32)
         PUBLIC
             Src
             ${3RDPARTY_PATH}/glext
-            ${1STPARTY_PATH}/utilities/include
-            ${1STPARTY_PATH}/utilities/include/vulkan
-            ${1STPARTY_PATH}/utilities/include/utils
+            ${MetaDev_PATH}/utilities/include
+            ${MetaDev_PATH}/utilities/include/vulkan
+            ${MetaDev_PATH}/utilities/include/utils
     )
 
     target_link_libraries(samplecommon_win32gl PUBLIC opengl32 gdi32 user32)
@@ -133,7 +133,7 @@ add_library(samplecommon_gl INTERFACE)
 target_include_directories(
     samplecommon_gl
     INTERFACE
-        ${1STPARTY_PATH}/OVR/Include
+        ${MetaDev_PATH}/OVR/Include
         ${3RDPARTY_PATH}/khronos/openxr/OpenXR-SDK/src/common
         # Extra vendor-provided headers
         ${OPENXR_PREVIEW_HEADER}
@@ -162,7 +162,7 @@ if(ANDROID)
     target_include_directories(
         native_activity_framework
         INTERFACE
-            ${1STPARTY_PATH}/OVR/Include
+            ${MetaDev_PATH}/OVR/Include
             ${3RDPARTY_PATH}/khronos/openxr/OpenXR-SDK/src/common
             # Extra vendor-provided headers
             ${OPENXR_PREVIEW_HEADER}
