@@ -1,7 +1,0 @@
-#Wed Aug 06 18:44:49 CEST 2025
-base.1=C\:\\Users\\miguel\\AndroidStudioProjects\\ProyectoVR\\Samples\\XrSamples\\HolaMundo\\Projects\\Android\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\13\\classes.dex
-path.1=13/classes.dex
-base.0=C\:\\Users\\miguel\\AndroidStudioProjects\\ProyectoVR\\Samples\\XrSamples\\HolaMundo\\Projects\\Android\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\0\\classes.dex
-renamed.1=classes2.dex
-renamed.0=classes.dex
-path.0=0/classes.dex

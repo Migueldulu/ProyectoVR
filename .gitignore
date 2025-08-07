@@ -1,5 +1,29 @@
-# Ignorar archivos temporales
-*.log
-*.tmp
-.cxx/
-.gradle/
+# Android build folders
+**/build/
+**/out/
+
+# Android Studio generated files
+**/.gradle/
+**/local.properties
+**/.idea/
+*.iml
+*.iws
+*.ipr
+
+# NDK/CMake
+**/.cxx/
+**/.externalNativeBuild/
+
+# Android specific
+**/captures/
+**/.navigation/
+**/output.json
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
