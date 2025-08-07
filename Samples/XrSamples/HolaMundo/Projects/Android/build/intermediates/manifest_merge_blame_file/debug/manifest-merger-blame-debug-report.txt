@@ -1,0 +1,115 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="io.github.migueldulu.HolamundoVR"
+4    android:installLocation="auto"
+5    android:versionCode="1"
+6    android:versionName="1.0" >
+7
+8    <uses-sdk
+9        android:minSdkVersion="26"
+9-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml
+10        android:targetSdkVersion="32" />
+10-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml
+11    <!-- Obliga a tener OpenGl ES y a tener un head device -->
+12    <uses-feature
+12-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:11:3-14:9
+13        android:glEsVersion="0x00030001"
+13-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:12:7-39
+14        android:required="true" />
+14-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:13:7-30
+15    <uses-feature
+15-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:15:3-18:9
+16        android:name="android.hardware.vr.headtracking"
+16-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:16:7-54
+17        android:required="true" />
+17-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:17:7-30
+18
+19    <uses-permission android:name="org.khronos.openxr.permission.OPENXR" />
+19-->[org.khronos.openxr:openxr_loader_for_android:1.1.46] C:\Users\miguel\.gradle\caches\transforms-3\a06f1f81c0a23a163ec8e732d6380a36\transformed\openxr_loader_for_android-1.1.46\AndroidManifest.xml:13:3-74
+19-->[org.khronos.openxr:openxr_loader_for_android:1.1.46] C:\Users\miguel\.gradle\caches\transforms-3\a06f1f81c0a23a163ec8e732d6380a36\transformed\openxr_loader_for_android-1.1.46\AndroidManifest.xml:13:20-71
+20    <uses-permission android:name="org.khronos.openxr.permission.OPENXR_SYSTEM" />
+20-->[org.khronos.openxr:openxr_loader_for_android:1.1.46] C:\Users\miguel\.gradle\caches\transforms-3\a06f1f81c0a23a163ec8e732d6380a36\transformed\openxr_loader_for_android-1.1.46\AndroidManifest.xml:14:3-81
+20-->[org.khronos.openxr:openxr_loader_for_android:1.1.46] C:\Users\miguel\.gradle\caches\transforms-3\a06f1f81c0a23a163ec8e732d6380a36\transformed\openxr_loader_for_android-1.1.46\AndroidManifest.xml:14:20-78
+21
+22    <queries>
+22-->[org.khronos.openxr:openxr_loader_for_android:1.1.46] C:\Users\miguel\.gradle\caches\transforms-3\a06f1f81c0a23a163ec8e732d6380a36\transformed\openxr_loader_for_android-1.1.46\AndroidManifest.xml:16:3-27:13
+23
+24        <!-- to talk to the broker -->
+25        <provider android:authorities="org.khronos.openxr.runtime_broker;org.khronos.openxr.system_runtime_broker" />
+25-->[org.khronos.openxr:openxr_loader_for_android:1.1.46] C:\Users\miguel\.gradle\caches\transforms-3\a06f1f81c0a23a163ec8e732d6380a36\transformed\openxr_loader_for_android-1.1.46\AndroidManifest.xml:18:5-114
+25-->[org.khronos.openxr:openxr_loader_for_android:1.1.46] C:\Users\miguel\.gradle\caches\transforms-3\a06f1f81c0a23a163ec8e732d6380a36\transformed\openxr_loader_for_android-1.1.46\AndroidManifest.xml:18:15-111
+26
+27        <!-- so client-side code of runtime/layers can talk to their service sides -->
+28        <intent>
+28-->[org.khronos.openxr:openxr_loader_for_android:1.1.46] C:\Users\miguel\.gradle\caches\transforms-3\a06f1f81c0a23a163ec8e732d6380a36\transformed\openxr_loader_for_android-1.1.46\AndroidManifest.xml:21:5-23:14
+29            <action android:name="org.khronos.openxr.OpenXRRuntimeService" />
+29-->[org.khronos.openxr:openxr_loader_for_android:1.1.46] C:\Users\miguel\.gradle\caches\transforms-3\a06f1f81c0a23a163ec8e732d6380a36\transformed\openxr_loader_for_android-1.1.46\AndroidManifest.xml:22:7-72
+29-->[org.khronos.openxr:openxr_loader_for_android:1.1.46] C:\Users\miguel\.gradle\caches\transforms-3\a06f1f81c0a23a163ec8e732d6380a36\transformed\openxr_loader_for_android-1.1.46\AndroidManifest.xml:22:15-69
+30        </intent>
+31        <intent>
+31-->[org.khronos.openxr:openxr_loader_for_android:1.1.46] C:\Users\miguel\.gradle\caches\transforms-3\a06f1f81c0a23a163ec8e732d6380a36\transformed\openxr_loader_for_android-1.1.46\AndroidManifest.xml:24:5-26:14
+32            <action android:name="org.khronos.openxr.OpenXRApiLayerService" />
+32-->[org.khronos.openxr:openxr_loader_for_android:1.1.46] C:\Users\miguel\.gradle\caches\transforms-3\a06f1f81c0a23a163ec8e732d6380a36\transformed\openxr_loader_for_android-1.1.46\AndroidManifest.xml:25:7-73
+32-->[org.khronos.openxr:openxr_loader_for_android:1.1.46] C:\Users\miguel\.gradle\caches\transforms-3\a06f1f81c0a23a163ec8e732d6380a36\transformed\openxr_loader_for_android-1.1.46\AndroidManifest.xml:25:15-70
+33        </intent>
+34    </queries> <!-- Desactivar el backup auto porque las apps vr pueden tener datos sensibles -->
+35    <application
+35-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:20:3-50:17
+36        android:allowBackup="false"
+36-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:21:7-34
+37        android:debuggable="true"
+38        android:extractNativeLibs="false"
+39        android:label="@string/app_name" >
+39-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:22:7-39
+40
+41        <!--
+42         launchMode is set to singleTask because there should never be multiple copies of the
+43		app running
+44        -->
+45        <!--
+46         Theme.Black.NoTitleBar.Fullscreen gives solid black instead of a (bad stereoscopic)
+47		gradient on app transition
+48        -->
+49        <!-- configChanges configurado por -->
+50        <activity
+50-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:29:5-49:16
+51            android:name="io.github.migueldulu.HolamundoVR.MainActivity"
+51-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:30:9-69
+52            android:configChanges="screenSize|screenLayout|orientation|keyboardHidden|keyboard|navigation|uiMode"
+52-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:35:9-110
+53            android:exported="true"
+53-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:36:9-32
+54            android:label="@string/app_name"
+54-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:32:9-41
+55            android:launchMode="singleTask"
+55-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:33:9-40
+56            android:screenOrientation="landscape"
+56-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:34:9-46
+57            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" >
+57-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:31:9-73
+58
+59            <!-- Tell NativeActivity the name of the .so -->
+60            <meta-data
+60-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:39:7-42:13
+61                android:name="android.app.lib_name"
+61-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:40:11-46
+62                android:value="xrsamples_HolaMundo" />
+62-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:41:11-46
+63            <!-- Permite ver la aplicacion como un icono, y ademas integramos OpenXr -->
+64            <intent-filter>
+64-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:44:7-48:23
+65                <action android:name="android.intent.action.MAIN" />
+65-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:45:9-61
+65-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:45:17-58
+66
+67                <category android:name="org.khronos.openxr.intent.category.IMMERSIVE_HMD" />
+67-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:46:9-85
+67-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:46:19-82
+68                <category android:name="android.intent.category.LAUNCHER" />
+68-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:47:9-69
+68-->C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\Projects\Android\AndroidManifest.xml:47:19-66
+69            </intent-filter>
+70        </activity>
+71    </application>
+72
+73</manifest>

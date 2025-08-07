@@ -1,0 +1,6 @@
+C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\CMakeLists.txt
+C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\3rdParty\CMakeLists.txt
+C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\CMakeLists.txt
+C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\SampleXrFramework\CMakeLists.txt
+C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\HolaMundo\CMakeLists.txt
+C:\Users\miguel\AndroidStudioProjects\ProyectoVR\Samples\XrSamples\SuperHolaMundo\CMakeLists.txt

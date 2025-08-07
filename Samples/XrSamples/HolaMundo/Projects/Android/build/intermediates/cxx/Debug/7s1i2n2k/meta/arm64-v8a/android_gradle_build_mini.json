@@ -1,0 +1,104 @@
+{
+  "buildFiles": [
+    "C:\\Users\\miguel\\AndroidStudioProjects\\ProyectoVR\\Samples\\CMakeLists.txt",
+    "C:\\Users\\miguel\\AndroidStudioProjects\\ProyectoVR\\Samples\\3rdParty\\CMakeLists.txt",
+    "C:\\Users\\miguel\\AndroidStudioProjects\\ProyectoVR\\Samples\\XrSamples\\CMakeLists.txt",
+    "C:\\Users\\miguel\\AndroidStudioProjects\\ProyectoVR\\Samples\\SampleXrFramework\\CMakeLists.txt",
+    "C:\\Users\\miguel\\AndroidStudioProjects\\ProyectoVR\\Samples\\XrSamples\\HolaMundo\\CMakeLists.txt",
+    "C:\\Users\\miguel\\AndroidStudioProjects\\ProyectoVR\\Samples\\XrSamples\\SuperHolaMundo\\CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "C:\\Users\\miguel\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+      "-C",
+      "C:\\Users\\miguel\\AndroidStudioProjects\\ProyectoVR\\Samples\\XrSamples\\HolaMundo\\Projects\\Android\\.cxx\\Debug\\7s1i2n2k\\arm64-v8a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "C:\\Users\\miguel\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+    "-C",
+    "C:\\Users\\miguel\\AndroidStudioProjects\\ProyectoVR\\Samples\\XrSamples\\HolaMundo\\Projects\\Android\\.cxx\\Debug\\7s1i2n2k\\arm64-v8a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "xrsamples_HolaMundo-Debug-arm64-v8a": {
+      "artifactName": "xrsamples_HolaMundo",
+      "buildCommandComponents": [
+        "C:\\Users\\miguel\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+        "-C",
+        "C:\\Users\\miguel\\AndroidStudioProjects\\ProyectoVR\\Samples\\XrSamples\\HolaMundo\\Projects\\Android\\.cxx\\Debug\\7s1i2n2k\\arm64-v8a",
+        "xrsamples_HolaMundo"
+      ],
+      "abi": "arm64-v8a",
+      "output": "C:\\Users\\miguel\\AndroidStudioProjects\\ProyectoVR\\Samples\\XrSamples\\HolaMundo\\Projects\\Android\\build\\intermediates\\cxx\\Debug\\7s1i2n2k\\obj\\arm64-v8a\\libxrsamples_HolaMundo.so",
+      "runtimeFiles": [
+        "C:\\Users\\miguel\\AndroidStudioProjects\\ProyectoVR\\Samples\\3rdParty\\khronos\\ktx\\lib\\android\\arm64-v8a\\libktx.so",
+        "C:\\Users\\miguel\\.gradle\\caches\\transforms-3\\a06f1f81c0a23a163ec8e732d6380a36\\transformed\\openxr_loader_for_android-1.1.46\\prefab\\modules\\openxr_loader\\libs\\android.arm64-v8a\\libopenxr_loader.so"
+      ]
+    },
+    "samplexrframework-Debug-arm64-v8a": {
+      "artifactName": "samplexrframework",
+      "buildCommandComponents": [
+        "C:\\Users\\miguel\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+        "-C",
+        "C:\\Users\\miguel\\AndroidStudioProjects\\ProyectoVR\\Samples\\XrSamples\\HolaMundo\\Projects\\Android\\.cxx\\Debug\\7s1i2n2k\\arm64-v8a",
+        "samplexrframework"
+      ],
+      "abi": "arm64-v8a",
+      "output": "C:\\Users\\miguel\\AndroidStudioProjects\\ProyectoVR\\Samples\\XrSamples\\HolaMundo\\Projects\\Android\\.cxx\\Debug\\7s1i2n2k\\arm64-v8a\\SampleXrFramework\\libsamplexrframework.a",
+      "runtimeFiles": []
+    },
+    "stb-Debug-arm64-v8a": {
+      "artifactName": "stb",
+      "buildCommandComponents": [
+        "C:\\Users\\miguel\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+        "-C",
+        "C:\\Users\\miguel\\AndroidStudioProjects\\ProyectoVR\\Samples\\XrSamples\\HolaMundo\\Projects\\Android\\.cxx\\Debug\\7s1i2n2k\\arm64-v8a",
+        "stb"
+      ],
+      "abi": "arm64-v8a",
+      "output": "C:\\Users\\miguel\\AndroidStudioProjects\\ProyectoVR\\Samples\\XrSamples\\HolaMundo\\Projects\\Android\\.cxx\\Debug\\7s1i2n2k\\arm64-v8a\\3rdParty\\libstb.a",
+      "runtimeFiles": []
+    },
+    "xrsamples_SuperHolaMundo-Debug-arm64-v8a": {
+      "artifactName": "xrsamples_SuperHolaMundo",
+      "buildCommandComponents": [
+        "C:\\Users\\miguel\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+        "-C",
+        "C:\\Users\\miguel\\AndroidStudioProjects\\ProyectoVR\\Samples\\XrSamples\\HolaMundo\\Projects\\Android\\.cxx\\Debug\\7s1i2n2k\\arm64-v8a",
+        "xrsamples_SuperHolaMundo"
+      ],
+      "abi": "arm64-v8a",
+      "output": "C:\\Users\\miguel\\AndroidStudioProjects\\ProyectoVR\\Samples\\XrSamples\\HolaMundo\\Projects\\Android\\build\\intermediates\\cxx\\Debug\\7s1i2n2k\\obj\\arm64-v8a\\libxrsamples_SuperHolaMundo.so",
+      "runtimeFiles": [
+        "C:\\Users\\miguel\\AndroidStudioProjects\\ProyectoVR\\Samples\\3rdParty\\khronos\\ktx\\lib\\android\\arm64-v8a\\libktx.so",
+        "C:\\Users\\miguel\\.gradle\\caches\\transforms-3\\a06f1f81c0a23a163ec8e732d6380a36\\transformed\\openxr_loader_for_android-1.1.46\\prefab\\modules\\openxr_loader\\libs\\android.arm64-v8a\\libopenxr_loader.so"
+      ]
+    },
+    "app_glue-Debug-arm64-v8a": {
+      "artifactName": "app_glue",
+      "buildCommandComponents": [
+        "C:\\Users\\miguel\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+        "-C",
+        "C:\\Users\\miguel\\AndroidStudioProjects\\ProyectoVR\\Samples\\XrSamples\\HolaMundo\\Projects\\Android\\.cxx\\Debug\\7s1i2n2k\\arm64-v8a",
+        "app_glue"
+      ],
+      "abi": "arm64-v8a",
+      "output": "C:\\Users\\miguel\\AndroidStudioProjects\\ProyectoVR\\Samples\\XrSamples\\HolaMundo\\Projects\\Android\\.cxx\\Debug\\7s1i2n2k\\arm64-v8a\\SampleXrFramework\\libapp_glue.a",
+      "runtimeFiles": []
+    },
+    "minizip-Debug-arm64-v8a": {
+      "artifactName": "minizip",
+      "buildCommandComponents": [
+        "C:\\Users\\miguel\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+        "-C",
+        "C:\\Users\\miguel\\AndroidStudioProjects\\ProyectoVR\\Samples\\XrSamples\\HolaMundo\\Projects\\Android\\.cxx\\Debug\\7s1i2n2k\\arm64-v8a",
+        "minizip"
+      ],
+      "abi": "arm64-v8a",
+      "output": "C:\\Users\\miguel\\AndroidStudioProjects\\ProyectoVR\\Samples\\XrSamples\\HolaMundo\\Projects\\Android\\.cxx\\Debug\\7s1i2n2k\\arm64-v8a\\3rdParty\\libminizip.a",
+      "runtimeFiles": []
+    }
+  }
+}

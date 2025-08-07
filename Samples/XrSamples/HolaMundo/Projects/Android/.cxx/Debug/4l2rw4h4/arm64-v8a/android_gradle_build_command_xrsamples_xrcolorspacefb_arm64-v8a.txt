@@ -1,7 +1,0 @@
-Executable : C:\Users\miguel\AppData\Local\Android\Sdk\cmake\3.10.2.4988404\bin\ninja.exe
-arguments : 
--C
-C:\Users\miguel\AndroidStudioProjects\BaseSimple\Samples\XrSamples\HolaMundo\Projects\Android\.cxx\Debug\4l2rw4h4\arm64-v8a
-xrsamples_HolaMundo
-jvmArgs : 
-
