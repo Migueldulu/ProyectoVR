@@ -2,7 +2,60 @@
 <module type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$" />
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/.cxx" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/.cxx/Debug/3e4s5b31/arm64-v8a/CMakeFiles/CMakeTmp" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/.cxx/Debug/3e4s5b31/arm64-v8a/XrSamples/CMakeFiles" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/.cxx/Debug/3e4s5b31/arm64-v8a/XrSamples/XrColorSpaceFB/CMakeFiles" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/.cxx/Debug/5p135b3i/arm64-v8a/CMakeFiles/CMakeTmp" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/.cxx/Debug/5p135b3i/arm64-v8a/XrSamples/CMakeFiles" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/.cxx/Debug/7s1i2n2k/arm64-v8a/3rdParty/CMakeFiles" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/.cxx/Debug/7s1i2n2k/arm64-v8a/CMakeFiles/CMakeTmp" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/.cxx/Debug/7s1i2n2k/arm64-v8a/SampleXrFramework/CMakeFiles" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/.cxx/Debug/7s1i2n2k/arm64-v8a/XrSamples/CMakeFiles" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/.cxx/Debug/7s1i2n2k/arm64-v8a/XrSamples/HolaMundo/CMakeFiles" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/.cxx/Debug/7s1i2n2k/arm64-v8a/XrSamples/SuperHolaMundo" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/.gradle" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/.gradle/7.2/vcsMetadata-1" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/generated/ap_generated_sources" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/generated/res" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/aar_metadata_check" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/data_binding_layout_info_type_merge" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/data_binding_layout_info_type_package" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/desugar_graph/debug/out/externalLibs" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/desugar_graph/debug/out/mixedScopes" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/desugar_graph/debug/out/otherProjects" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/dex/debug/mergeExtDexDebug" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/dex/debug/mergeLibDexDebug" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/dex/debug/mergeProjectDexDebug/1" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/dex/debug/mergeProjectDexDebug/10" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/dex/debug/mergeProjectDexDebug/11" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/dex/debug/mergeProjectDexDebug/12" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/dex/debug/mergeProjectDexDebug/14" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/dex/debug/mergeProjectDexDebug/15" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/dex/debug/mergeProjectDexDebug/2" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/dex/debug/mergeProjectDexDebug/3" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/dex/debug/mergeProjectDexDebug/4" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/dex/debug/mergeProjectDexDebug/5" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/dex/debug/mergeProjectDexDebug/6" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/dex/debug/mergeProjectDexDebug/7" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/dex/debug/mergeProjectDexDebug/8" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/dex/debug/mergeProjectDexDebug/9" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/duplicate_classes_check" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/external_file_lib_dex_archives" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/external_libs_dex_archive" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/external_libs_dex_archive_with_artifact_transforms" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/incremental/mergeDebugResources/stripped.dir" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/incremental/packageDebugResources/stripped.dir" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/incremental/processDebugResources" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/merged_jni_libs" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/merged_shaders" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/mixed_scope_dex_archive" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/sub_project_dex_archive" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/HolaMundo/Projects/Android/build/intermediates/validate_signing_config" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/SuperHolaMundo/Projects/Android/.cxx" />
+      <excludeFolder url="file://$MODULE_DIR$/Samples/XrSamples/SuperHolaMundo/Projects/Android/.gradle" />
+    </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>

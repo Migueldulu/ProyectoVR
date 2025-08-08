@@ -2263,6 +2263,7 @@ class Quat {
 
     // Rotate transforms vector in a manner that matches Matrix rotations (counter-clockwise,
     // assuming negative direction of the axis). Standard formula: q(t) * V * q(t)^-1.
+
     Vector3<T> Rotate(const Vector3<T>& v) const {
         return ((*this * Quat<T>(v.x, v.y, v.z, T(0))) * Inverted()).Imag();
     }

@@ -13,6 +13,12 @@
 #include "Render/SimpleBeamRenderer.h"
 
 class XrAppBaseApp : public OVRFW::XrApp {
+
+private:
+    OVRFW::VRMenuObject* holaMundoLabel;  // La voy a usar para cambiar la posicion OJO es una ref no un obj
+    bool debeReposicionar = false;  // Flag para reposicionar
+    bool labelCreado = false;
+
 public:
     // Constructor, establece color de fondo
     XrAppBaseApp() : OVRFW::XrApp() {
@@ -44,15 +50,13 @@ public:
     // - Create swapchain with xrCreateSwapchain
     // - xrAttachSessionActionSets
     virtual bool SessionInit() override {
-        // Crear el mensaje "Hola Mundo" en el centro de la vista
-        ui_.AddLabel("Hola Mundo", {0.0f, 1.5f, -2.0f}, {400.0f, 100.0f});
 
         // Init objects that need OpenXR Session
-        if (false == controllerRenderL_.Init(true)) {
+        if (!controllerRenderL_.Init(true)) {
             ALOG("SessionInit::Init L controller renderer FAILED.");
             return false;
         }
-        if (false == controllerRenderR_.Init(false)) {
+        if (!controllerRenderR_.Init(false)) {
             ALOG("SessionInit::Init R controller renderer FAILED.");
             return false;
         }
@@ -63,6 +67,36 @@ public:
 
     // Se invoca cada frame
     virtual void Update(const OVRFW::ovrApplFrameIn& in) override {
+
+        if(!labelCreado){
+            //Se obtiene la matriz de pos de la cabeza y se le añade un offset
+            OVR::Matrix4f matrizInicial = OVR::Matrix4f(in.HeadPose);
+            OVR::Vector3f posiInicial = matrizInicial.Transform({0.0f, -0.35f, -2.0f});
+            holaMundoLabel = ui_.AddLabel("Super Hola Mundo", posiInicial, {400.0f, 100.0f});
+            holaMundoLabel->SetLocalRotation(in.HeadPose.Rotation);
+            labelCreado = true;
+        }
+        // Detectar si se presiona botón A para reposicionar (como el botón Meta)
+        if (in.Clicked(OVRFW::ovrApplFrameIn::kButtonA)) {
+            debeReposicionar = true;
+            // Cambiar color temporalmente para feedback
+            holaMundoLabel->SetTextColor(OVR::Vector4f(0.0f, 0.0f, 0.0f, 1.0f));
+        } else {
+            holaMundoLabel->SetTextColor(OVR::Vector4f(1.0f, 1.0f, 1.0f, 1.0f));
+        }
+
+        if (debeReposicionar) {
+            //borramos el padre, que es lo que tomaba setLocalPosition de referencia de posicion
+            ui_.RemoveParentMenu(holaMundoLabel);
+            holaMundoLabel = nullptr;
+            OVR::Matrix4f matrizNuevaCabeza = OVR::Matrix4f(in.HeadPose);
+            OVR::Vector3f nuevaPosi = matrizNuevaCabeza.Transform({0.0f, -0.35f, -2.0f});
+            holaMundoLabel = ui_.AddLabel("Super Hola Mundo", nuevaPosi, {400.0f, 100.0f});
+            holaMundoLabel->SetLocalRotation(in.HeadPose.Rotation);
+
+            debeReposicionar = false;
+        }
+
         // Clear the intersection rays from last frame:
         ui_.HitTestDevices().clear();
 
