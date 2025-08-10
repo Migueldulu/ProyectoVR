@@ -1,211 +1,427 @@
+// main.cpp (versión corregida)
+#include <vector>
 #include <string>
-#include <string_view>
+#include <memory>
+#include <cstring>
+#include <iostream>
 
 #include <openxr/openxr.h>
+#include <GLES3/gl3.h>
 
-#include "GUI/VRMenuObject.h"
-#include "Render/BitmapFont.h"
 #include "XrApp.h"
-
 #include "OVR_Math.h"
-#include "Input/ControllerRenderer.h"
-#include "Input/TinyUI.h"
-#include "Render/SimpleBeamRenderer.h"
+#include "Misc/Log.h"
 
-class XrAppBaseApp : public OVRFW::XrApp {
 
-    private:
-    OVRFW::VRMenuObject* holaMundoLabel;  // La voy a usar para cambiar la posicion OJO es una ref no un obj
-    OVRFW::VRMenuObject* toggleButton;
-    bool debeReposicionar = false;  // Flag para reposicionar
-    bool labelCreado = false;
-    bool labelVisible = true;
+class SegundoPlanoApp : public OVRFW::XrApp {
+private:
+    // Compositor Layer para el overlay de texto
+    XrCompositionLayerQuad textOverlayLayer;
+    XrSwapchain textSwapchain;
+
+    // Configuración del overlay
+    bool overlayEnabled = true;
+    static const int OVERLAY_WIDTH = 512;
+    static const int OVERLAY_HEIGHT = 128;
+
+    // OpenGL resources
+    GLuint framebuffer;
+    GLuint shaderProgram;
+    GLuint VAO, VBO, EBO;
 
 public:
-    // Constructor, establece color de fondo
-    XrAppBaseApp() : OVRFW::XrApp() {
-        BackgroundColor = OVR::Vector4f(0.55f, 0.35f, 0.1f, 1.0f);
+    SegundoPlanoApp() : OVRFW::XrApp() {
+        BackgroundColor = OVR::Vector4f(0.1f, 0.1f, 0.1f, 1.0f);
+        textSwapchain = XR_NULL_HANDLE;
+        framebuffer = 0;
+        shaderProgram = 0;
+        VAO = VBO = EBO = 0;
+
+        // Inicializar la layer de forma segura
+        std::memset(&textOverlayLayer, 0, sizeof(textOverlayLayer));
+        textOverlayLayer.type = XR_TYPE_COMPOSITION_LAYER_QUAD;
     }
 
-    // Lista de extensiones necesarias para esta app
     virtual std::vector<const char*> GetExtensions() override {
         std::vector<const char*> extensions = XrApp::GetExtensions();
         return extensions;
     }
 
-    /* Antes de esta función, OVRFW::XrApp::Init() llama:
-     - xrInitializeLoaderKHR
-     - xrCreateInstance con las extensiones de GetExtensions,
-     - xrSuggestInteractionProfileBindings(...) para configurar los enlaces de acciones */
     virtual bool AppInit(const xrJava* context) override {
-        // Init UI system
-        if (false == ui_.Init(context, GetFileSys())) {
-            ALOG("TinyUI::Init FAILED.");
-            return false;
-        }
+        ALOG("SegundoPlano AppInit iniciado");
         return true;
     }
 
-    /* Antes de esta función y dsp de AppInit,  XrApp::InitSession() llama:
-     - xrCreateSession
-     - xrCreateReferenceSpace para espacio local y espacio de escenario
-     - Create swapchain with xrCreateSwapchain
-     - xrAttachSessionActionSets */
     virtual bool SessionInit() override {
-        // Init objects that need OpenXR Session
-        if (!controllerRenderL_.Init(true)) {
-            ALOG("SessionInit::Init L controller renderer FAILED.");
+        ALOG("SegundoPlano SessionInit iniciado");
+
+        // Crear swapchain para el overlay de texto
+        if (!CreateTextOverlaySwapchain()) {
+            ALOG("ERROR: No se pudo crear el swapchain para el overlay");
             return false;
         }
-        if (!controllerRenderR_.Init(false)) {
-            ALOG("SessionInit::Init R controller renderer FAILED.");
+
+        // Configurar OpenGL para renderizar texto
+        if (!SetupTextRendering()) {
+            ALOG("ERROR: No se pudo configurar el renderizado de texto");
             return false;
         }
-        cursorBeamRenderer_.Init(GetFileSys(), nullptr, OVR::Vector4f(1.0f), 1.0f);
+
+        // Configurar la compositor layer
+        SetupCompositorLayer();
+
+        ALOG("SegundoPlano SessionInit completado exitosamente");
         return true;
     }
 
-    // Se invoca cada frame
     virtual void Update(const OVRFW::ovrApplFrameIn& in) override {
-
-        if(!labelCreado){
-            //Se obtiene la matriz de pos de la cabeza y se le añade un offset
-            OVR::Matrix4f matrizInicial = OVR::Matrix4f(in.HeadPose);
-            OVR::Vector3f posiInicial = matrizInicial.Transform({0.0f, -0.35f, -2.0f});
-            holaMundoLabel = ui_.AddLabel("Super Hola Mundo", posiInicial, {400.0f, 100.0f});
-            holaMundoLabel->SetLocalRotation(in.HeadPose.Rotation);
-
-            //creamos el boton
-            // NUEVO: Crear el botón virtual de toggle
-            OVR::Vector3f posicionBoton = matrizInicial.Transform({-0.75f, -0.1f, -2.0f});
-            toggleButton = ui_.AddButton(
-                    "Ocultar Texto",
-                    posicionBoton,
-                    {200.0f, 75.0f},
-                    [this]() {
-                        this->ToggleTextoVisibilidad();
-                    }
-            );
-            toggleButton->SetLocalRotation(in.HeadPose.Rotation);
-            labelCreado = true;
+        // Actualizar el contenido del overlay cada frame
+        if (overlayEnabled && textSwapchain != XR_NULL_HANDLE) {
+            UpdateTextOverlay();
         }
-        // Detectar si se presiona botón A para reposicionar (como el botón Meta)
+
+        // Toggle overlay con botón A
         if (in.Clicked(OVRFW::ovrApplFrameIn::kButtonA)) {
-            debeReposicionar = true;
-            // Cambiar color temporalmente para feedback
-            holaMundoLabel->SetTextColor(OVR::Vector4f(0.0f, 0.0f, 0.0f, 1.0f));
-        } else {
-            holaMundoLabel->SetTextColor(OVR::Vector4f(1.0f, 1.0f, 1.0f, 1.0f));
+            overlayEnabled = !overlayEnabled;
+            ALOG("Overlay %s", overlayEnabled ? "activado" : "desactivado");
         }
-
-        if (debeReposicionar) {
-            //reposicionar label y boton
-            ReposicionarElementos(in.HeadPose);
-            debeReposicionar = false;
-        }
-
-        // Clear the intersection rays from last frame:
-        ui_.HitTestDevices().clear();
-
-        if (in.LeftRemoteTracked) {
-            controllerRenderL_.Update(in.LeftRemotePose);
-            const bool didTrigger = in.LeftRemoteIndexTrigger > 0.5f;
-            ui_.AddHitTestRay(in.LeftRemotePointPose, didTrigger);
-        }
-
-        if (in.RightRemoteTracked) {
-            controllerRenderR_.Update(in.RightRemotePose);
-            const bool didTrigger = in.RightRemoteIndexTrigger > 0.5f;
-            ui_.AddHitTestRay(in.RightRemotePointPose, didTrigger);
-        }
-
-        ui_.Update(in);
-        cursorBeamRenderer_.Update(in, ui_.HitTestDevices());
     }
 
     virtual void Render(const OVRFW::ovrApplFrameIn& in, OVRFW::ovrRendererOutput& out) override {
-        ui_.Render(in, out);
+        // La aplicación base puede renderizar su contenido aquí
+    }
 
-        if (in.LeftRemoteTracked) {
-            controllerRenderL_.Render(out.Surfaces);
+    // Implementar PostProjectionAddLayer para añadir nuestro overlay
+    virtual void PostProjectionAddLayer(OVRFW::XrApp::xrCompositorLayerUnion* layers, int& layerCount) override {
+        if (overlayEnabled && textSwapchain != XR_NULL_HANDLE) {
+            // Asegurarse de añadir la dirección del struct (se copia la estructura)
+            layers[layerCount++].Quad = textOverlayLayer;
+            ALOG("Compositor layer añadida, total layers: %d", layerCount);
         }
-        if (in.RightRemoteTracked) {
-            controllerRenderR_.Render(out.Surfaces);
-        }
-
-        /// Render beams last, since they render with transparency
-        cursorBeamRenderer_.Render(in, out);
     }
 
     virtual void SessionEnd() override {
-        controllerRenderL_.Shutdown();
-        controllerRenderR_.Shutdown();
-        cursorBeamRenderer_.Shutdown();
+        CleanupTextRendering();
+        if (textSwapchain != XR_NULL_HANDLE) {
+            xrDestroySwapchain(textSwapchain);
+            textSwapchain = XR_NULL_HANDLE;
+        }
+        ALOG("SegundoPlano SessionEnd completado");
     }
 
     virtual void AppShutdown(const xrJava* context) override {
         OVRFW::XrApp::AppShutdown(context);
-        ui_.Shutdown();
+        ALOG("SegundoPlano AppShutdown completado");
     }
 
-    private:
-    OVRFW::ControllerRenderer controllerRenderL_;
-    OVRFW::ControllerRenderer controllerRenderR_;
-    OVRFW::TinyUI ui_;
+private:
+    bool CreateTextOverlaySwapchain() {
+        // Configurar el formato del swapchain
+        XrSwapchainCreateInfo swapchainCreateInfo{XR_TYPE_SWAPCHAIN_CREATE_INFO};
+        swapchainCreateInfo.arraySize = 1;
+        // OpenXR espera int64_t para format; casteamos desde define GL_RGBA8
+        swapchainCreateInfo.format = static_cast<int64_t>(GL_RGBA8);
+        swapchainCreateInfo.width = OVERLAY_WIDTH;
+        swapchainCreateInfo.height = OVERLAY_HEIGHT;
+        swapchainCreateInfo.mipCount = 1;
+        swapchainCreateInfo.faceCount = 1;
+        swapchainCreateInfo.sampleCount = 1;
+        swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT | XR_SWAPCHAIN_USAGE_SAMPLED_BIT;
 
-    // Renderer that draws the beam from the controller
-    OVRFW::SimpleBeamRenderer cursorBeamRenderer_;
-
-    // NUEVO: Función para alternar la visibilidad del texto
-    void ToggleTextoVisibilidad() {
-        if (holaMundoLabel != nullptr) {
-            labelVisible = !labelVisible;
-            holaMundoLabel->SetVisible(labelVisible);
-
-            // Actualizar el texto del botón según el estado
-            if (labelVisible) {
-                toggleButton->SetText("Ocultar Texto");
-            } else {
-                toggleButton->SetText("Mostrar Texto");
-            }
+        XrResult result = xrCreateSwapchain(Session, &swapchainCreateInfo, &textSwapchain);
+        if (XR_FAILED(result)) {
+            ALOG("ERROR: xrCreateSwapchain falló: %d", result);
+            return false;
         }
-        ALOG("ToggleTextoVisibilidad llamado - labelVisible: %s",
-             labelVisible ? "true" : "false");
+
+        ALOG("Swapchain creado exitosamente: %dx%d", OVERLAY_WIDTH, OVERLAY_HEIGHT);
+        return true;
     }
 
-    void ReposicionarElementos(const OVR::Posef& headPose) {
-        if (holaMundoLabel && toggleButton) {
-            /*borramos el padre, que es lo que tomaba setLocalPosition de referencia de posicion y se recolocaba mal
-            se hace en este orden para que el siguiente parent Menu sea el correcto (del label)
-            si coge el parent Menu de crear Button, el label nuevo puede ser clickado */
-            ui_.RemoveParentMenu(toggleButton);
-            ui_.RemoveParentMenu(holaMundoLabel);
-            toggleButton = nullptr;
-            holaMundoLabel = nullptr;
+    bool SetupTextRendering() {
+        // Shader vertex simple
+        const char* vertexShaderSource = R"(
+            #version 300 es
+            precision mediump float;
+            layout (location = 0) in vec2 aPos;
+            layout (location = 1) in vec2 aTexCoord;
+            out vec2 TexCoord;
+            void main() {
+                gl_Position = vec4(aPos, 0.0, 1.0);
+                TexCoord = aTexCoord;
+            }
+        )";
 
-            // Recrear con nueva posición
-            OVR::Matrix4f matrizNuevaCabeza = OVR::Matrix4f(headPose);
+        // Shader fragment para texto
+        const char* fragmentShaderSource = R"(
+            #version 300 es
+            precision mediump float;
+            out vec4 FragColor;
+            in vec2 TexCoord;
+            uniform vec3 textColor;
+            void main() {
+                // Por ahora, color sólido en el área del texto
+                if (TexCoord.x > 0.1 && TexCoord.x < 0.9 &&
+                    TexCoord.y > 0.3 && TexCoord.y < 0.7) {
+                    FragColor = vec4(textColor, 1.0);
+                } else {
+                    FragColor = vec4(0.0, 0.0, 0.0, 0.0); // Transparente
+                }
+            }
+        )";
 
-            // Recrear el label
-            OVR::Vector3f nuevaPosi = matrizNuevaCabeza.Transform({0.0f, -0.35f, -2.0f});
-            holaMundoLabel = ui_.AddLabel("Super Hola Mundo", nuevaPosi, {400.0f, 100.0f});
-            holaMundoLabel->SetLocalRotation(headPose.Rotation);
-            holaMundoLabel->SetVisible(labelVisible);
+        // Compilar shaders
+        GLuint vertexShader = CompileShader(GL_VERTEX_SHADER, vertexShaderSource);
+        GLuint fragmentShader = CompileShader(GL_FRAGMENT_SHADER, fragmentShaderSource);
 
-            // Recrear el botón
-            OVR::Vector3f posicionBoton = matrizNuevaCabeza.Transform({-0.75f, -0.1f, -2.0f});
-            toggleButton = ui_.AddButton(
-                    // si es true el 1 si es false el segundo
-                    labelVisible ? "Ocultar Texto" : "Mostrar Texto",
-                    posicionBoton,
-                    {200.0f, 75.0f},
-                    [this]() {
-                        this->ToggleTextoVisibilidad();
-                    }
-            );
-            toggleButton->SetLocalRotation(headPose.Rotation);
+        if (vertexShader == 0 || fragmentShader == 0) {
+            if (vertexShader) glDeleteShader(vertexShader);
+            if (fragmentShader) glDeleteShader(fragmentShader);
+            return false;
+        }
+
+        // Crear programa shader
+        shaderProgram = glCreateProgram();
+        glAttachShader(shaderProgram, vertexShader);
+        glAttachShader(shaderProgram, fragmentShader);
+        glLinkProgram(shaderProgram);
+
+        // Verificar linkeo
+        GLint success = 0;
+        glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+        if (!success) {
+            GLint logLength = 0;
+            glGetProgramiv(shaderProgram, GL_INFO_LOG_LENGTH, &logLength);
+            std::string infoLog;
+            infoLog.resize(logLength > 0 ? logLength : 1);
+            glGetProgramInfoLog(shaderProgram, logLength, nullptr, &infoLog[0]);
+            ALOG("ERROR: Linkeo del shader falló: %s", infoLog.c_str());
+            glDeleteProgram(shaderProgram);
+            shaderProgram = 0;
+            glDeleteShader(vertexShader);
+            glDeleteShader(fragmentShader);
+            return false;
+        }
+
+        glDeleteShader(vertexShader);
+        glDeleteShader(fragmentShader);
+
+        // Configurar geometría (quad completo)
+        float vertices[] = {
+                // positions    // texture coords
+                -1.0f, -1.0f,   0.0f, 0.0f,
+                1.0f, -1.0f,   1.0f, 0.0f,
+                1.0f,  1.0f,   1.0f, 1.0f,
+                -1.0f,  1.0f,   0.0f, 1.0f
+        };
+
+        GLuint indices[] = {
+                0, 1, 2,
+                2, 3, 0
+        };
+
+        glGenVertexArrays(1, &VAO);
+        glGenBuffers(1, &VBO);
+        glGenBuffers(1, &EBO);
+
+        glBindVertexArray(VAO);
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+        glEnableVertexAttribArray(1);
+
+        glBindVertexArray(0);
+
+        ALOG("Configuración de renderizado de texto completada");
+        return true;
+    }
+
+    GLuint CompileShader(GLenum type, const char* source) {
+        GLuint shader = glCreateShader(type);
+        glShaderSource(shader, 1, &source, nullptr);
+        glCompileShader(shader);
+
+        GLint success = 0;
+        glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+        if (!success) {
+            GLint logLength = 0;
+            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logLength);
+            std::string infoLog;
+            infoLog.resize(logLength > 0 ? logLength : 1);
+            glGetShaderInfoLog(shader, logLength, nullptr, &infoLog[0]);
+            ALOG("ERROR: Compilación del shader falló: %s", infoLog.c_str());
+            glDeleteShader(shader);
+            return 0;
+        }
+
+        return shader;
+    }
+
+    void SetupCompositorLayer() {
+        // Configurar la compositor layer
+        // Aseguramos que .type ya está seteado en constructor
+        // textOverlayLayer.type = XR_TYPE_COMPOSITION_LAYER_QUAD;
+
+        // Configurar flags para blend y transparencia (si el runtime soporta)
+        textOverlayLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+
+        // Posición del overlay: fija relativa al headset
+        // Nota: "HeadSpace" debe existir en tu XrApp base. Si no, reemplazar por el reference space correcto.
+        textOverlayLayer.space = HeadSpace;
+
+        // Inicializar pose explícitamente
+        textOverlayLayer.pose.orientation.x = 0.0f;
+        textOverlayLayer.pose.orientation.y = 0.0f;
+        textOverlayLayer.pose.orientation.z = 0.0f;
+        textOverlayLayer.pose.orientation.w = 1.0f;
+
+        textOverlayLayer.pose.position.x = 0.3f;
+        textOverlayLayer.pose.position.y = 0.2f;
+        textOverlayLayer.pose.position.z = -0.5f;
+
+        // Tamaño del quad (en metros)
+        textOverlayLayer.size = {0.3f, 0.08f}; // 30cm x 8cm
+
+        // Configurar subimagen del swapchain
+        textOverlayLayer.subImage.swapchain = textSwapchain;
+        textOverlayLayer.subImage.imageRect.offset = {0, 0};
+        textOverlayLayer.subImage.imageRect.extent = {OVERLAY_WIDTH, OVERLAY_HEIGHT};
+        textOverlayLayer.subImage.imageArrayIndex = 0;
+
+        ALOG("Compositor layer configurada en posición (%.2f, %.2f, %.2f)",
+             textOverlayLayer.pose.position.x,
+             textOverlayLayer.pose.position.y,
+             textOverlayLayer.pose.position.z);
+    }
+
+    void UpdateTextOverlay() {
+        // Obtener la imagen actual del swapchain
+        uint32_t imageIndex = 0;
+        XrSwapchainImageAcquireInfo acquireInfo{XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO};
+        XrResult res = xrAcquireSwapchainImage(textSwapchain, &acquireInfo, &imageIndex);
+        if (XR_FAILED(res)) {
+            ALOG("ERROR: xrAcquireSwapchainImage falló: %d", res);
+            return;
+        }
+
+        XrSwapchainImageWaitInfo waitInfo{XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO};
+        waitInfo.timeout = XR_INFINITE_DURATION;
+        res = xrWaitSwapchainImage(textSwapchain, &waitInfo);
+        if (XR_FAILED(res)) {
+            ALOG("ERROR: xrWaitSwapchainImage falló: %d", res);
+            return;
+        }
+
+        // Obtener las imágenes del swapchain
+        uint32_t imageCount = 0;
+        xrEnumerateSwapchainImages(textSwapchain, 0, &imageCount, nullptr);
+        std::vector<XrSwapchainImageOpenGLESKHR> swapchainImages;
+        swapchainImages.resize(imageCount);
+        for (uint32_t i = 0; i < imageCount; ++i) {
+            swapchainImages[i].type = XR_TYPE_SWAPCHAIN_IMAGE_OPENGL_ES_KHR;
+            swapchainImages[i].next = nullptr;
+        }
+        res = xrEnumerateSwapchainImages(textSwapchain, imageCount, &imageCount,
+                                         reinterpret_cast<XrSwapchainImageBaseHeader*>(swapchainImages.data()));
+        if (XR_FAILED(res)) {
+            ALOG("ERROR: xrEnumerateSwapchainImages falló: %d", res);
+            // intentar liberar la imagen antes de salir
+            XrSwapchainImageReleaseInfo releaseInfo{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
+            xrReleaseSwapchainImage(textSwapchain, &releaseInfo);
+            return;
+        }
+
+        if (imageIndex >= imageCount) {
+            ALOG("ERROR: imageIndex fuera de rango: %u >= %u", imageIndex, imageCount);
+            XrSwapchainImageReleaseInfo releaseInfo{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
+            xrReleaseSwapchainImage(textSwapchain, &releaseInfo);
+            return;
+        }
+
+        // Renderizar el contenido del texto
+        RenderTextToTexture(swapchainImages[imageIndex].image);
+
+        // Liberar la imagen
+        XrSwapchainImageReleaseInfo releaseInfo{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
+        xrReleaseSwapchainImage(textSwapchain, &releaseInfo);
+    }
+
+    void RenderTextToTexture(GLuint texture) {
+        // Crear framebuffer si no existe
+        if (framebuffer == 0) {
+            glGenFramebuffers(1, &framebuffer);
+        }
+
+        // Configurar framebuffer para renderizar a la textura
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+
+        GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        if (status != GL_FRAMEBUFFER_COMPLETE) {
+            ALOG("ERROR: Framebuffer incompleto: 0x%x", status);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            return;
+        }
+
+        // Configurar viewport
+        glViewport(0, 0, OVERLAY_WIDTH, OVERLAY_HEIGHT);
+
+        // Limpiar con transparencia
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // Habilitar blending para transparencia
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        // Usar nuestro shader
+        glUseProgram(shaderProgram);
+
+        // Configurar color del texto (verde brillante)
+        GLint colorLocation = glGetUniformLocation(shaderProgram, "textColor");
+        if (colorLocation >= 0) {
+            glUniform3f(colorLocation, 0.0f, 1.0f, 0.0f);
+        }
+
+        // Renderizar el quad
+        glBindVertexArray(VAO);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
+
+        glDisable(GL_BLEND);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    void CleanupTextRendering() {
+        if (framebuffer != 0) {
+            glDeleteFramebuffers(1, &framebuffer);
+            framebuffer = 0;
+        }
+        if (VAO != 0) {
+            glDeleteVertexArrays(1, &VAO);
+            VAO = 0;
+        }
+        if (VBO != 0) {
+            glDeleteBuffers(1, &VBO);
+            VBO = 0;
+        }
+        if (EBO != 0) {
+            glDeleteBuffers(1, &EBO);
+            EBO = 0;
+        }
+        if (shaderProgram != 0) {
+            glDeleteProgram(shaderProgram);
+            shaderProgram = 0;
         }
     }
 };
 
-ENTRY_POINT(XrAppBaseApp)
+// Punto de entrada de la aplicación usando la macro del framework
+ENTRY_POINT(SegundoPlanoApp)

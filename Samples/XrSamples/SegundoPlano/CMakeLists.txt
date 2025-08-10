@@ -1,5 +1,5 @@
 
-project(xrsamples_HolaMundo)
+project(xrsamples_SegundoPlano)
 
 #Es redundante pero sirve para encontrar errores en el debugging
 if(NOT TARGET OpenXR::openxr_loader)
@@ -12,7 +12,7 @@ file(GLOB_RECURSE SRC_FILES
     Src/*.cpp
 )
 
-#En android se crea el libxrsamples_HolaMundo.so y en windows el xrsamples_HolaMundo.exe
+#En android se crea el libxrsamples_SegundoPlano.so y en windows el xrsamples_SegundoPlano.exe
 if(ANDROID)
     # En Android: Las aplicaciones nativas son MODULE libraries (librerias dinamicas para android)
     add_library(${PROJECT_NAME} MODULE ${SRC_FILES})
