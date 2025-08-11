@@ -1,4 +1,3 @@
-// main.cpp (versión corregida)
 #include <vector>
 #include <string>
 #include <memory>
@@ -15,7 +14,7 @@
 
 class SegundoPlanoApp : public OVRFW::XrApp {
 private:
-    // Compositor Layer para el overlay de texto
+    // Compositor Layer para el overlay de texto (Quad=Rectangulo)
     XrCompositionLayerQuad textOverlayLayer;
     XrSwapchain textSwapchain;
 
@@ -32,12 +31,13 @@ private:
 public:
     SegundoPlanoApp() : OVRFW::XrApp() {
         BackgroundColor = OVR::Vector4f(0.1f, 0.1f, 0.1f, 1.0f);
+        // El valor significa no-inicializado
         textSwapchain = XR_NULL_HANDLE;
         framebuffer = 0;
         shaderProgram = 0;
         VAO = VBO = EBO = 0;
 
-        // Inicializar la layer de forma segura
+        // Memory set para inicializacion de forma segura
         std::memset(&textOverlayLayer, 0, sizeof(textOverlayLayer));
         textOverlayLayer.type = XR_TYPE_COMPOSITION_LAYER_QUAD;
     }
@@ -47,11 +47,13 @@ public:
         return extensions;
     }
 
+    //Aqui se crea la sesion OpenXR
     virtual bool AppInit(const xrJava* context) override {
         ALOG("SegundoPlano AppInit iniciado");
         return true;
     }
 
+    //Se puede crear recursos OpenXR porque ahora SI existe la sesion
     virtual bool SessionInit() override {
         ALOG("SegundoPlano SessionInit iniciado");
 
@@ -91,10 +93,10 @@ public:
         // La aplicación base puede renderizar su contenido aquí
     }
 
-    // Implementar PostProjectionAddLayer para añadir nuestro overlay
+    // Se ejecuta en el main loop despues de renderizar el contenido  (si quisieramos capas detras del contenido se usaria PreProjectionAddLayer)
     virtual void PostProjectionAddLayer(OVRFW::XrApp::xrCompositorLayerUnion* layers, int& layerCount) override {
         if (overlayEnabled && textSwapchain != XR_NULL_HANDLE) {
-            // Asegurarse de añadir la dirección del struct (se copia la estructura)
+            // Accedemos al tipo quad en la union que contiene los tipos de layer
             layers[layerCount++].Quad = textOverlayLayer;
             ALOG("Compositor layer añadida, total layers: %d", layerCount);
         }
@@ -118,14 +120,13 @@ private:
     bool CreateTextOverlaySwapchain() {
         // Configurar el formato del swapchain
         XrSwapchainCreateInfo swapchainCreateInfo{XR_TYPE_SWAPCHAIN_CREATE_INFO};
-        swapchainCreateInfo.arraySize = 1;
-        // OpenXR espera int64_t para format; casteamos desde define GL_RGBA8
-        swapchainCreateInfo.format = static_cast<int64_t>(GL_RGBA8);
+        swapchainCreateInfo.arraySize = 1; // 1 para Imagen 2D normal
+        swapchainCreateInfo.format = static_cast<int64_t>(GL_RGBA8); // OpenXR espera int64_t para format
         swapchainCreateInfo.width = OVERLAY_WIDTH;
         swapchainCreateInfo.height = OVERLAY_HEIGHT;
-        swapchainCreateInfo.mipCount = 1;
-        swapchainCreateInfo.faceCount = 1;
-        swapchainCreateInfo.sampleCount = 1;
+        swapchainCreateInfo.mipCount = 1; //sin mipmaps
+        swapchainCreateInfo.faceCount = 1; //sin cubemap
+        swapchainCreateInfo.sampleCount = 1; //sin multisampling
         swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT | XR_SWAPCHAIN_USAGE_SAMPLED_BIT;
 
         XrResult result = xrCreateSwapchain(Session, &swapchainCreateInfo, &textSwapchain);
@@ -174,21 +175,23 @@ private:
         GLuint vertexShader = CompileShader(GL_VERTEX_SHADER, vertexShaderSource);
         GLuint fragmentShader = CompileShader(GL_FRAGMENT_SHADER, fragmentShaderSource);
 
+        //Si es 0 significa que hubo un error
         if (vertexShader == 0 || fragmentShader == 0) {
             if (vertexShader) glDeleteShader(vertexShader);
             if (fragmentShader) glDeleteShader(fragmentShader);
             return false;
         }
 
-        // Crear programa shader
+        // Se adjuntan los shaders
         shaderProgram = glCreateProgram();
         glAttachShader(shaderProgram, vertexShader);
         glAttachShader(shaderProgram, fragmentShader);
         glLinkProgram(shaderProgram);
 
-        // Verificar linkeo
+        // Verificar linkeo y se borran shaders cuando ya los tiene el programa
         GLint success = 0;
         glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+        // Si hubo error: se limpian recursos (delete program + delete shaders) y se retorna false
         if (!success) {
             GLint logLength = 0;
             glGetProgramiv(shaderProgram, GL_INFO_LOG_LENGTH, &logLength);
@@ -265,9 +268,8 @@ private:
     }
 
     void SetupCompositorLayer() {
-        // Configurar la compositor layer
-        // Aseguramos que .type ya está seteado en constructor
-        // textOverlayLayer.type = XR_TYPE_COMPOSITION_LAYER_QUAD;
+        // Configurar la compositor layer Aseguramos que .type ya está seteado en constructor
+         textOverlayLayer.type = XR_TYPE_COMPOSITION_LAYER_QUAD;
 
         // Configurar flags para blend y transparencia (si el runtime soporta)
         textOverlayLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
@@ -302,7 +304,7 @@ private:
     }
 
     void UpdateTextOverlay() {
-        // Obtener la imagen actual del swapchain
+        // Adquiere una imagen del pool y conseguimos su indice en el array
         uint32_t imageIndex = 0;
         XrSwapchainImageAcquireInfo acquireInfo{XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO};
         XrResult res = xrAcquireSwapchainImage(textSwapchain, &acquireInfo, &imageIndex);
@@ -310,7 +312,7 @@ private:
             ALOG("ERROR: xrAcquireSwapchainImage falló: %d", res);
             return;
         }
-
+        //esperar la info de esa imagen
         XrSwapchainImageWaitInfo waitInfo{XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO};
         waitInfo.timeout = XR_INFINITE_DURATION;
         res = xrWaitSwapchainImage(textSwapchain, &waitInfo);
@@ -321,15 +323,16 @@ private:
 
         // Obtener las imágenes del swapchain
         uint32_t imageCount = 0;
-        xrEnumerateSwapchainImages(textSwapchain, 0, &imageCount, nullptr);
-        std::vector<XrSwapchainImageOpenGLESKHR> swapchainImages;
+        //primero obtenemos cuantas imagenes hay en cola -> imageCount obtiene su valor ahora
+        xrEnumerateSwapchainImages(textSwapchain, 0, &imageCount, nullptr);         //las variables de entrada son (swapchain, imageCapacityInput, imageCapacityOutput, images)
+        std::vector<XrSwapchainImageOpenGLESKHR> swapchainImages;   //variable de swapchain para rellenar
+        //rellenar el swapchain eligiendo su tipo e inizializandolos
         swapchainImages.resize(imageCount);
         for (uint32_t i = 0; i < imageCount; ++i) {
             swapchainImages[i].type = XR_TYPE_SWAPCHAIN_IMAGE_OPENGL_ES_KHR;
             swapchainImages[i].next = nullptr;
         }
-        res = xrEnumerateSwapchainImages(textSwapchain, imageCount, &imageCount,
-                                         reinterpret_cast<XrSwapchainImageBaseHeader*>(swapchainImages.data()));
+        res = xrEnumerateSwapchainImages(textSwapchain, imageCount, &imageCount, reinterpret_cast<XrSwapchainImageBaseHeader*>(swapchainImages.data()));
         if (XR_FAILED(res)) {
             ALOG("ERROR: xrEnumerateSwapchainImages falló: %d", res);
             // intentar liberar la imagen antes de salir
@@ -359,9 +362,9 @@ private:
             glGenFramebuffers(1, &framebuffer);
         }
 
-        // Configurar framebuffer para renderizar a la textura
+        // Configurar framebuffer para renderizar a la textura, si no se activa se usa el framebuffer por defecto (se supone que es la pantalla pero da error)
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0); //texture es nuestra imagen
 
         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if (status != GL_FRAMEBUFFER_COMPLETE) {
@@ -373,11 +376,11 @@ private:
         // Configurar viewport
         glViewport(0, 0, OVERLAY_WIDTH, OVERLAY_HEIGHT);
 
-        // Limpiar con transparencia
+        // Limpiar con transparencia lo negro
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // Habilitar blending para transparencia
+        // Activa el mezclado alfa con la formula por defecto que dice openxr
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -387,7 +390,7 @@ private:
         // Configurar color del texto (verde brillante)
         GLint colorLocation = glGetUniformLocation(shaderProgram, "textColor");
         if (colorLocation >= 0) {
-            glUniform3f(colorLocation, 0.0f, 1.0f, 0.0f);
+            glUniform3f(colorLocation, 1.0f, 0.243f, 0.08f);
         }
 
         // Renderizar el quad
@@ -399,6 +402,7 @@ private:
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
+    //Si no se limpia al principio no falla pero acaba lageando la app hasta que crashea
     void CleanupTextRendering() {
         if (framebuffer != 0) {
             glDeleteFramebuffers(1, &framebuffer);
@@ -423,5 +427,5 @@ private:
     }
 };
 
-// Punto de entrada de la aplicación usando la macro del framework
+// Punto de entrada
 ENTRY_POINT(SegundoPlanoApp)
