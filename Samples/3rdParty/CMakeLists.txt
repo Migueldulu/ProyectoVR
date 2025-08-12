@@ -98,7 +98,9 @@ function(find_stb)
         ${CMAKE_CURRENT_LIST_DIR}/stb/src/stb_image.c
         ${CMAKE_CURRENT_LIST_DIR}/stb/src/stb_image_write.c
         ${CMAKE_CURRENT_LIST_DIR}/stb/src/stb_vorbis.c
+        ${CMAKE_CURRENT_LIST_DIR}/stb/src/stb_truetype.c
     )
+
 
     add_library(stb STATIC ${STB_SRC})
 
