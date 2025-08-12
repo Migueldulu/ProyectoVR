@@ -8,7 +8,6 @@
 #include <chrono>
 #include <ctime>
 
-
 #include <openxr/openxr.h>
 #include <GLES3/gl3.h>
 
@@ -17,6 +16,7 @@
 #include "Misc/Log.h"
 
 #include "stb_truetype.h"
+#include <cstdint>
 
 class PosicionesApp : public OVRFW::XrApp {
 private:
@@ -41,6 +41,11 @@ private:
     int fontAtlasHeight = 512;
     float fontPixelHeight = 48.0f;
 
+    bool overlayImageAvailable = false;
+    uint32_t acquiredImageIndex = UINT32_MAX;
+    GLuint acquiredImageTexture = 0;
+    bool imageAcquiredThisFrame = false;
+
     // Variables para texto dinámico
     std::string currentTimeText;
     float animationTime = 0.0f;
@@ -49,6 +54,9 @@ public:
     PosicionesApp() : OVRFW::XrApp() {
         BackgroundColor = OVR::Vector4f(0.1f, 0.1f, 0.1f, 1.0f);
         framebuffer = shaderProgram = VAO = VBO = 0;
+        std::memset(&textOverlayLayer, 0, sizeof(textOverlayLayer));
+        textOverlayLayer.type = XR_TYPE_COMPOSITION_LAYER_QUAD;
+
         std::memset(&textOverlayLayer, 0, sizeof(textOverlayLayer));
         textOverlayLayer.type = XR_TYPE_COMPOSITION_LAYER_QUAD;
     }
@@ -80,9 +88,8 @@ public:
             return false;
         }
 
-        if (!CargarFontAtlas("res/font/robotocondensed_regular.ttf")){
-            ALOG("ERROR: ha fallado cargar el atlas");
-            return false;
+        if (!CargarFontAtlas("res/font/robotocondensed_regular.ttf")) {
+            ALOG("WARNING: No se pudo cargar el atlas de fuentes, usando renderizado básico");
         }
 
         // Configurar la compositor layer
@@ -93,13 +100,21 @@ public:
     }
 
     virtual void Update(const OVRFW::ovrApplFrameIn& in) override {
+        // 1️⃣ Liberar imagen adquirida en el frame anterior (si existe)
+        if (acquiredImageIndex != UINT32_MAX) {
+            XrSwapchainImageReleaseInfo releaseInfo{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
+            xrReleaseSwapchainImage(textSwapchain, &releaseInfo);
+            acquiredImageIndex = UINT32_MAX;
+            acquiredImageTexture = 0;
+        }
+
         // Actualizar el tiempo de animación
         animationTime += in.DeltaSeconds;
 
         // Actualizar el texto cada frame
         UpdateTimeText();
 
-        // Actualizar el contenido del overlay cada frame
+        // 2️⃣ Adquirir y dibujar nueva imagen para este frame
         if (overlayEnabled && textSwapchain != XR_NULL_HANDLE) {
             UpdateTextOverlay();
         }
@@ -117,11 +132,12 @@ public:
 
     // Se ejecuta en el main loop despues de renderizar el contenido  (si quisieramos capas detras del contenido se usaria PreProjectionAddLayer)
     virtual void PostProjectionAddLayer(OVRFW::XrApp::xrCompositorLayerUnion* layers, int& layerCount) override {
-        if (overlayEnabled && textSwapchain != XR_NULL_HANDLE) {
-            // Accedemos al tipo quad en la union que contiene los tipos de layer
+        if (overlayEnabled && textSwapchain != XR_NULL_HANDLE && overlayImageAvailable && acquiredImageIndex != UINT32_MAX) {
             layers[layerCount++].Quad = textOverlayLayer;
-            ALOG("Compositor layer añadida, total layers: %d", layerCount);
+            ALOG("Compositor layer añadida (imageIndex: %u), total layers: %d", acquiredImageIndex, layerCount);
         }
+        // Marcar que ya se usó esta imagen para no reutilizarla en otro frame
+        imageAcquiredThisFrame = false;
     }
 
     virtual void SessionEnd() override {
@@ -178,28 +194,28 @@ private:
     }
 
     void UpdateTextOverlay() {
-        // Obtener imagen actual del swapchain
+        // Adquirir nueva imagen para este frame
         XrSwapchainImageAcquireInfo acquireInfo{XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO};
-        uint32_t imageIndex;
+        uint32_t imageIndex = 0;
         XrResult result = xrAcquireSwapchainImage(textSwapchain, &acquireInfo, &imageIndex);
         if (XR_FAILED(result)) {
             ALOG("ERROR: xrAcquireSwapchainImage falló: %d", result);
+            overlayImageAvailable = false;
             return;
         }
 
-        // Esperar a que la imagen esté disponible
+        // Esperar disponibilidad
         XrSwapchainImageWaitInfo waitInfo{XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO};
         waitInfo.timeout = XR_INFINITE_DURATION;
         result = xrWaitSwapchainImage(textSwapchain, &waitInfo);
         if (XR_FAILED(result)) {
             ALOG("ERROR: xrWaitSwapchainImage falló: %d", result);
-            XrSwapchainImageReleaseInfo releaseInfo{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
-            xrReleaseSwapchainImage(textSwapchain, &releaseInfo);
+            overlayImageAvailable = false;
             return;
         }
 
-        // Obtener las imágenes del swapchain
-        uint32_t imageCount;
+        // Obtener lista de imágenes del swapchain
+        uint32_t imageCount = 0;
         xrEnumerateSwapchainImages(textSwapchain, 0, &imageCount, nullptr);
         std::vector<XrSwapchainImageOpenGLESKHR> swapchainImages(imageCount, {XR_TYPE_SWAPCHAIN_IMAGE_OPENGL_ES_KHR});
         xrEnumerateSwapchainImages(textSwapchain, imageCount, &imageCount,
@@ -207,38 +223,65 @@ private:
 
         if (imageIndex >= imageCount) {
             ALOG("ERROR: imageIndex fuera de rango: %u >= %u", imageIndex, imageCount);
-            XrSwapchainImageReleaseInfo releaseInfo{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
-            xrReleaseSwapchainImage(textSwapchain, &releaseInfo);
+            overlayImageAvailable = false;
             return;
         }
 
-        // Renderizar el contenido del texto
-        RenderTextToTexture(swapchainImages[imageIndex].image);
+        // Guardar para PostProjectionAddLayer()
+        acquiredImageIndex = imageIndex;
+        acquiredImageTexture = swapchainImages[imageIndex].image;
+        imageAcquiredThisFrame = true;
 
-        // Liberar la imagen
-        XrSwapchainImageReleaseInfo releaseInfo{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
-        xrReleaseSwapchainImage(textSwapchain, &releaseInfo);
+        // Dibujar sobre la textura adquirida
+        RenderTextToTexture(acquiredImageTexture);
+
+        // Configurar la subImage de la capa
+        textOverlayLayer.subImage.swapchain = textSwapchain;
+        textOverlayLayer.subImage.imageArrayIndex = acquiredImageIndex;
+        textOverlayLayer.subImage.imageRect.offset.x = 0;
+        textOverlayLayer.subImage.imageRect.offset.y = 0;
+        textOverlayLayer.subImage.imageRect.extent.width = OVERLAY_WIDTH;
+        textOverlayLayer.subImage.imageRect.extent.height = OVERLAY_HEIGHT;
+
+        imageAcquiredThisFrame = true;
+        overlayImageAvailable = true;
     }
 
     void RenderTextToTexture(GLuint texture) {
+        if (texture == 0) {
+            ALOG("WARN: RenderTextToTexture recibió texture = 0");
+            return;
+        }
+
         // Crear framebuffer si no existe
         if (framebuffer == 0) {
             glGenFramebuffers(1, &framebuffer);
         }
 
-        // Configurar framebuffer para renderizar a la textura
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        // enlazamos la textura del swapchain al framebuffer
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
 
         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if (status != GL_FRAMEBUFFER_COMPLETE) {
             ALOG("ERROR: Framebuffer incompleto: 0x%x", status);
+            GLenum err = glGetError();
+            ALOG("GL error after framebuffer setup: 0x%x", err);
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             return;
         }
 
-        // Configurar viewport
+        // Viewport: protecciones por si medidas sin sentido
+        if (OVERLAY_WIDTH <= 0 || OVERLAY_HEIGHT <= 0) {
+            ALOG("ERROR: OVERLAY_WIDTH/HEIGHT inválidos");
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            return;
+        }
         glViewport(0, 0, OVERLAY_WIDTH, OVERLAY_HEIGHT);
+        GLenum err = glGetError();
+        if (err != GL_NO_ERROR) {
+            ALOG("GL error after glViewport: 0x%x", err);
+        }
 
         // Limpiar con transparencia
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -249,22 +292,31 @@ private:
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         // Usar nuestro shader
-        glUseProgram(shaderProgram);
+        if (shaderProgram == 0) {
+            ALOG("WARN: shaderProgram = 0, no se puede dibujar texto");
+        } else {
+            glUseProgram(shaderProgram);
+            GLint locColor = glGetUniformLocation(shaderProgram, "textColor");
+            if (locColor >= 0) glUniform3f(locColor, 0.0f, 1.0f, 0.0f);
+            GLint locAtlas = glGetUniformLocation(shaderProgram, "fontAtlas");
+            if (locAtlas >= 0) glUniform1i(locAtlas, 0);
+        }
 
-        glUniform3f(glGetUniformLocation(shaderProgram, "textColor"), 0.0f, 1.0f, 0.0f);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, fontTexture);
+        glBindTexture(GL_TEXTURE_2D, fontTexture ? fontTexture : 0);
 
-        float x = -0.95f * OVERLAY_WIDTH / 2.0f;
+        // Coordenadas iniciales (en el sistema que usa stbtt_GetPackedQuad)
+        float x = 0.0f;
         float y = 0.0f;
+
+        float w = static_cast<float>(OVERLAY_WIDTH);
+        float h = static_cast<float>(OVERLAY_HEIGHT);
 
         for (char c : currentTimeText) {
             if (c < 32 || c >= 128) continue;
             stbtt_aligned_quad q;
             stbtt_GetPackedQuad(fontGlyphs, fontAtlasWidth, fontAtlasHeight, c - 32, &x, &y, &q, 1);
 
-            float w = OVERLAY_WIDTH;
-            float h = OVERLAY_HEIGHT;
             float vertices[6][4] = {
                     { q.x0 / w * 2 - 1, q.y0 / h * 2 - 1, q.s0, q.t0 },
                     { q.x1 / w * 2 - 1, q.y0 / h * 2 - 1, q.s1, q.t0 },
@@ -273,9 +325,16 @@ private:
                     { q.x1 / w * 2 - 1, q.y1 / h * 2 - 1, q.s1, q.t1 },
                     { q.x0 / w * 2 - 1, q.y1 / h * 2 - 1, q.s0, q.t1 }
             };
+
             glBindBuffer(GL_ARRAY_BUFFER, VBO);
             glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+            glBindVertexArray(VAO);
             glDrawArrays(GL_TRIANGLES, 0, 6);
+
+            GLenum e = glGetError();
+            if (e != GL_NO_ERROR) {
+                ALOG("GL error durante draw de char '%c': 0x%x", c, e);
+            }
         }
 
         glDisable(GL_BLEND);
@@ -412,7 +471,6 @@ private:
         textOverlayLayer.subImage.imageRect.offset.y = 0;
         textOverlayLayer.subImage.imageRect.extent.width = OVERLAY_WIDTH;
         textOverlayLayer.subImage.imageRect.extent.height = OVERLAY_HEIGHT;
-        textOverlayLayer.subImage.imageArrayIndex = 0;
 
         ALOG("Compositor layer configurada: posición (%.2f, %.2f, %.2f), tamaño (%.2f, %.2f)",
              textOverlayLayer.pose.position.x, textOverlayLayer.pose.position.y, textOverlayLayer.pose.position.z,
