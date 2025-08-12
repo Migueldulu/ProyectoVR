@@ -8,6 +8,7 @@
 #include <chrono>
 #include <ctime>
 
+
 #include <openxr/openxr.h>
 #include <GLES3/gl3.h>
 
@@ -15,7 +16,9 @@
 #include "OVR_Math.h"
 #include "Misc/Log.h"
 
-class SegundoPlanoApp : public OVRFW::XrApp {
+#include "stb_truetype.h"
+
+class PosicionesApp : public OVRFW::XrApp {
 private:
     // Compositor Layer para el overlay de texto (Quad=Rectangulo)
     XrCompositionLayerQuad textOverlayLayer;
@@ -31,25 +34,23 @@ private:
     GLuint shaderProgram;
     GLuint VAO, VBO, EBO;
 
+    // rendering fuente
+    GLuint fontTexture;
+    stbtt_packedchar fontGlyphs[96]; // ASCII 32-127
+    int fontAtlasWidth = 512;
+    int fontAtlasHeight = 512;
+    float fontPixelHeight = 48.0f;
+
     // Variables para texto dinámico
     std::string currentTimeText;
-    std::chrono::steady_clock::time_point lastTimeUpdate;
     float animationTime = 0.0f;
 
 public:
-    SegundoPlanoApp() : OVRFW::XrApp() {
+    PosicionesApp() : OVRFW::XrApp() {
         BackgroundColor = OVR::Vector4f(0.1f, 0.1f, 0.1f, 1.0f);
-        textSwapchain = XR_NULL_HANDLE; // El valor significa no-inicializado
-        framebuffer = 0;
-        shaderProgram = 0;
-        VAO = VBO = EBO = 0;
-
-        // Memory set para inicializacion de forma segura
+        framebuffer = shaderProgram = VAO = VBO = 0;
         std::memset(&textOverlayLayer, 0, sizeof(textOverlayLayer));
         textOverlayLayer.type = XR_TYPE_COMPOSITION_LAYER_QUAD;
-
-        lastTimeUpdate = std::chrono::steady_clock::now();
-        UpdateTimeText();
     }
 
     virtual std::vector<const char*> GetExtensions() override {
@@ -59,13 +60,13 @@ public:
 
     //Aqui se crea la sesion OpenXR
     virtual bool AppInit(const xrJava* context) override {
-        ALOG("SegundoPlano AppInit iniciado");
+        ALOG("Posiciones AppInit iniciado");
         return true;
     }
 
     //Se puede crear recursos OpenXR porque ahora SI existe la sesion
     virtual bool SessionInit() override {
-        ALOG("SegundoPlano SessionInit iniciado");
+        ALOG("Posiciones SessionInit iniciado");
 
         // Crear swapchain para el overlay de texto
         if (!CreateTextOverlaySwapchain()) {
@@ -79,10 +80,15 @@ public:
             return false;
         }
 
+        if (!CargarFontAtlas("res/font/robotocondensed_regular.ttf")){
+            ALOG("ERROR: ha fallado cargar el atlas");
+            return false;
+        }
+
         // Configurar la compositor layer
         SetupCompositorLayer();
 
-        ALOG("SegundoPlano SessionInit completado exitosamente");
+        ALOG("Posiciones SessionInit completado exitosamente");
         return true;
     }
 
@@ -90,13 +96,8 @@ public:
         // Actualizar el tiempo de animación
         animationTime += in.DeltaSeconds;
 
-        // Actualizar el texto cada segundo
-        auto now = std::chrono::steady_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastTimeUpdate);
-        if (duration.count() >= 1000) { // Actualizar cada 1000ms (1 segundo)
-            UpdateTimeText();
-            lastTimeUpdate = now;
-        }
+        // Actualizar el texto cada frame
+        UpdateTimeText();
 
         // Actualizar el contenido del overlay cada frame
         if (overlayEnabled && textSwapchain != XR_NULL_HANDLE) {
@@ -129,12 +130,12 @@ public:
             xrDestroySwapchain(textSwapchain);
             textSwapchain = XR_NULL_HANDLE;
         }
-        ALOG("SegundoPlano SessionEnd completado");
+        ALOG("Posiciones SessionEnd completado");
     }
 
     virtual void AppShutdown(const xrJava* context) override {
         OVRFW::XrApp::AppShutdown(context);
-        ALOG("SegundoPlano AppShutdown completado");
+        ALOG("Posiciones AppShutdown completado");
     }
 
 private:
@@ -146,8 +147,9 @@ private:
                 now.time_since_epoch()) % 1000;
 
         std::stringstream ss;
+        ss << "Hora actual Spain: ";
         ss << std::put_time(std::localtime(&time_t), "%H:%M:%S");
-        ss << "." << std::setfill('0') << std::setw(3) << ms.count();
+        ss << ":" << std::setfill('0') << std::setw(3) << ms.count();
 
         currentTimeText = ss.str();
         ALOG("Tiempo actualizado: %s", currentTimeText.c_str());
@@ -249,42 +251,32 @@ private:
         // Usar nuestro shader
         glUseProgram(shaderProgram);
 
-        // Configurar color del texto (verde brillante con pulsación)
-        float pulse = 0.8f + 0.2f * sinf(animationTime * 2.0f);
-        GLint colorLocation = glGetUniformLocation(shaderProgram, "textColor");
-        if (colorLocation >= 0) {
-            glUniform3f(colorLocation, 0.0f, pulse, 0.2f);
-        }
+        glUniform3f(glGetUniformLocation(shaderProgram, "textColor"), 0.0f, 1.0f, 0.0f);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, fontTexture);
 
-        // Pasar el tiempo para animación
-        GLint timeLocation = glGetUniformLocation(shaderProgram, "time");
-        if (timeLocation >= 0) {
-            glUniform1f(timeLocation, animationTime);
-        }
+        float x = -0.95f * OVERLAY_WIDTH / 2.0f;
+        float y = 0.0f;
 
-        // Pasar la cadena de tiempo como uniforms (simplificado para los primeros 8 caracteres)
-        GLint digitsLocation = glGetUniformLocation(shaderProgram, "timeDigits");
-        if (digitsLocation >= 0) {
-            float digits[12] = {0.0f}; // Máximo 12 caracteres
-            for (int i = 0; i < std::min(12, (int)currentTimeText.length()); ++i) {
-                char c = currentTimeText[i];
-                if (c >= '0' && c <= '9') {
-                    digits[i] = float(c - '0'); // 0-9
-                } else if (c == ':') {
-                    digits[i] = 10.0f; // Carácter especial para :
-                } else if (c == '.') {
-                    digits[i] = 11.0f; // Carácter especial para .
-                } else {
-                    digits[i] = -1.0f; // Carácter no reconocido
-                }
-            }
-            glUniform1fv(digitsLocation, 12, digits);
-        }
+        for (char c : currentTimeText) {
+            if (c < 32 || c >= 128) continue;
+            stbtt_aligned_quad q;
+            stbtt_GetPackedQuad(fontGlyphs, fontAtlasWidth, fontAtlasHeight, c - 32, &x, &y, &q, 1);
 
-        // Renderizar el quad
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);
+            float w = OVERLAY_WIDTH;
+            float h = OVERLAY_HEIGHT;
+            float vertices[6][4] = {
+                    { q.x0 / w * 2 - 1, q.y0 / h * 2 - 1, q.s0, q.t0 },
+                    { q.x1 / w * 2 - 1, q.y0 / h * 2 - 1, q.s1, q.t0 },
+                    { q.x1 / w * 2 - 1, q.y1 / h * 2 - 1, q.s1, q.t1 },
+                    { q.x0 / w * 2 - 1, q.y0 / h * 2 - 1, q.s0, q.t0 },
+                    { q.x1 / w * 2 - 1, q.y1 / h * 2 - 1, q.s1, q.t1 },
+                    { q.x0 / w * 2 - 1, q.y1 / h * 2 - 1, q.s0, q.t1 }
+            };
+            glBindBuffer(GL_ARRAY_BUFFER, VBO);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
 
         glDisable(GL_BLEND);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -298,108 +290,23 @@ private:
             layout (location = 0) in vec2 aPos;
             layout (location = 1) in vec2 aTexCoord;
             out vec2 TexCoord;
+            uniform vec2 offset; // desplazamiento global del texto
             void main() {
-                gl_Position = vec4(aPos, 0.0, 1.0);
+                gl_Position = vec4(aPos + offset, 0.0, 1.0);
                 TexCoord = aTexCoord;
             }
         )";
 
-        // Shader fragment avanzado para renderizar texto dinámico usando patrones de bits
         const char* fragmentShaderSource = R"(
             #version 300 es
             precision mediump float;
-            out vec4 FragColor;
             in vec2 TexCoord;
+            out vec4 FragColor;
+            uniform sampler2D fontAtlas;
             uniform vec3 textColor;
-            uniform float time;
-            uniform float timeDigits[12];
-
-            // Patrones de dígitos en formato bitmap 5x7
-            const int digitPatterns[12 * 7] = int[](
-                // Dígito 0
-                14, 17, 17, 17, 17, 17, 14,
-                // Dígito 1
-                4, 12, 4, 4, 4, 4, 14,
-                // Dígito 2
-                14, 17, 1, 14, 16, 16, 31,
-                // Dígito 3
-                14, 17, 1, 6, 1, 17, 14,
-                // Dígito 4
-                17, 17, 17, 31, 1, 1, 1,
-                // Dígito 5
-                31, 16, 16, 30, 1, 1, 30,
-                // Dígito 6
-                14, 16, 16, 30, 17, 17, 14,
-                // Dígito 7
-                31, 1, 2, 4, 8, 8, 8,
-                // Dígito 8
-                14, 17, 17, 14, 17, 17, 14,
-                // Dígito 9
-                14, 17, 17, 15, 1, 1, 14,
-                // Carácter : (dos puntos)
-                0, 4, 4, 0, 4, 4, 0,
-                // Carácter . (punto)
-                0, 0, 0, 0, 0, 4, 4
-            );
-
-            bool getPixel(int digit, int x, int y) {
-                if (digit < 0 || digit >= 12 || x < 0 || x >= 5 || y < 0 || y >= 7) {
-                    return false;
-                }
-                int patternIndex = digit * 7 + y;
-                int pattern = digitPatterns[patternIndex];
-                return ((pattern >> (4 - x)) & 1) == 1;
-            }
-
             void main() {
-                vec2 uv = TexCoord;
-
-                // Área de renderizado del texto
-                float textAreaLeft = 0.05;
-                float textAreaRight = 0.95;
-                float textAreaTop = 0.35;
-                float textAreaBottom = 0.65;
-
-                if (uv.x < textAreaLeft || uv.x > textAreaRight ||
-                    uv.y < textAreaTop || uv.y > textAreaBottom) {
-                    FragColor = vec4(0.0, 0.0, 0.0, 0.0);
-                    return;
-                }
-
-                // Normalizar coordenadas dentro del área de texto
-                float textU = (uv.x - textAreaLeft) / (textAreaRight - textAreaLeft);
-                float textV = (uv.y - textAreaTop) / (textAreaBottom - textAreaTop);
-
-                // Calcular qué carácter estamos renderizando
-                float charWidth = 1.0 / 12.0; // Espacio para 12 caracteres
-                int charIndex = int(textU / charWidth);
-
-                if (charIndex >= 12) {
-                    FragColor = vec4(0.0, 0.0, 0.0, 0.0);
-                    return;
-                }
-
-                // Coordenadas dentro del carácter actual
-                float charU = mod(textU, charWidth) / charWidth;
-                float charV = textV;
-
-                // Convertir a coordenadas de pixel en el bitmap 5x7
-                int pixelX = int(charU * 5.0);
-                int pixelY = int((1.0 - charV) * 7.0); // Invertir Y
-
-                // Obtener el dígito para este carácter
-                int digit = int(timeDigits[charIndex]);
-
-                // Verificar si este pixel debe estar encendido
-                bool pixelOn = getPixel(digit, pixelX, pixelY);
-
-                if (pixelOn) {
-                    // Agregar efecto de brillo pulsante
-                    float glow = 1.0 + 0.3 * sin(time * 3.0 + float(charIndex) * 0.5);
-                    FragColor = vec4(textColor * glow, 1.0);
-                } else {
-                    FragColor = vec4(0.0, 0.0, 0.0, 0.0);
-                }
+                float alpha = texture(fontAtlas, TexCoord).r;
+                FragColor = vec4(textColor, alpha);
             }
         )";
 
@@ -439,38 +346,20 @@ private:
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
 
-        // Configurar geometría (quad completo)
+        // Configurar geometría
         float vertices[] = {
-                // positions    // texture coords
-                -1.0f, -1.0f,   0.0f, 0.0f,
-                1.0f, -1.0f,   1.0f, 0.0f,
-                1.0f,  1.0f,   1.0f, 1.0f,
-                -1.0f,  1.0f,   0.0f, 1.0f
-        };
-
-        GLuint indices[] = {
-                0, 1, 2,
-                2, 3, 0
+                0,0, 0,0,  1,0, 1,0,  1,1, 1,1
         };
 
         glGenVertexArrays(1, &VAO);
         glGenBuffers(1, &VBO);
-        glGenBuffers(1, &EBO);
-
         glBindVertexArray(VAO);
-
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
         glEnableVertexAttribArray(1);
-
-        glBindVertexArray(0);
 
         ALOG("Configuración de renderizado de texto completada");
         return true;
@@ -551,8 +440,49 @@ private:
             glDeleteProgram(shaderProgram);
             shaderProgram = 0;
         }
+        if (fontTexture != 0){
+            glDeleteTextures(1, &fontTexture);
+            fontTexture = 0;
+        }
     }
+
+    bool CargarFontAtlas(const char* pathFuente) {
+        FILE* fontFile = fopen(pathFuente, "rb");
+        if (!fontFile) {
+            ALOG("Error: No se pudo abrir la fuente %s", pathFuente);
+            return false;
+        }
+        fseek(fontFile, 0, SEEK_END);
+        size_t size = ftell(fontFile);
+        fseek(fontFile, 0, SEEK_SET);
+
+        unsigned char* fontBuffer = new unsigned char[size];
+        fread(fontBuffer, 1, size, fontFile);
+        fclose(fontFile);
+
+        unsigned char* atlasBitmap = new unsigned char[fontAtlasWidth * fontAtlasHeight];
+        memset(atlasBitmap, 0, fontAtlasWidth * fontAtlasHeight);
+
+        stbtt_pack_context pc;
+        stbtt_PackBegin(&pc, atlasBitmap, fontAtlasWidth, fontAtlasHeight, 0, 1, nullptr);
+        stbtt_PackSetOversampling(&pc, 2, 2); // Suavizado mejorado
+        stbtt_PackFontRange(&pc, fontBuffer, 0, fontPixelHeight, 32, 96, fontGlyphs);
+        stbtt_PackEnd(&pc);
+
+        // Subir a OpenGL
+        glGenTextures(1, &fontTexture);
+        glBindTexture(GL_TEXTURE_2D, fontTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, fontAtlasWidth, fontAtlasHeight, 0, GL_RED, GL_UNSIGNED_BYTE, atlasBitmap);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        delete[] atlasBitmap;
+        delete[] fontBuffer;
+
+        return true;
+    }
+
 };
 
 // Punto de entrada
-ENTRY_POINT(SegundoPlanoApp)
+ENTRY_POINT(PosicionesApp)

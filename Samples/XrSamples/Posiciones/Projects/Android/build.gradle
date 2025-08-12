@@ -17,11 +17,11 @@ apply plugin: 'com.android.application'
 
 android {
   compileSdk 32
-  namespace 'io.github.migueldulu.SegundoPlanoVR'
+  namespace 'io.github.migueldulu.PosicionesVR'
 
 
   defaultConfig {
-    applicationId "io.github.migueldulu.SegundoPlanoVR"
+    applicationId "io.github.migueldulu.PosicionesVR"
     minSdk 26
     targetSdk 32
     versionCode 1
@@ -36,7 +36,7 @@ android {
         abiFilters 'arm64-v8a'
       }
       cmake {
-         targets "xrsamples_SegundoPlano"
+         targets "xrsamples_Posiciones"
       }
     }
   }
