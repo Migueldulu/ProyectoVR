@@ -12,6 +12,8 @@ file(GLOB_RECURSE SRC_FILES
     Src/*.cpp
 )
 
+#find_package(CURL REQUIRED)
+
 #En android se crea el libxrsamples_PreLibreria.so y en windows el xrsamples_PreLibreria.exe
 if(ANDROID)
     # En Android: Las aplicaciones nativas son MODULE libraries (librerias dinamicas para android)
@@ -23,6 +25,8 @@ if(ANDROID)
             GLESv3               # OpenGL ES 3.x
             log                  # Android logging (__android_log_print)
             ktx                  # Texturas KTX (compilada en 3rdParty)
+            curl                 # Para HTTP requests
+            jsoncpp              # Para manejo JSON
     )
     # Android necesita -u ANativeActivity_onCreate como punto de entrada
     set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-u ANativeActivity_onCreate")
